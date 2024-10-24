@@ -2,14 +2,14 @@ CREATE SCHEMA IF NOT EXISTS MyDatabase;
 USE MyDatabase;
 
 CREATE TABLE IF NOT EXISTS `account` (
-	`id` INT NOT NULL PRIMARY KEY,
+	`id` INT AUTO_INCREMENT PRIMARY KEY,
     `username` VARCHAR(45),
     `password` VARCHAR(45),
     `email` VARCHAR(45)
 );
 
 CREATE TABLE IF NOT EXISTS `user` (
-	`id` INT NOT NULL PRIMARY KEY,
+	`id` INT AUTO_INCREMENT PRIMARY KEY,
     `account_id` INT NOT NULL,
     `surename` VARCHAR(45),
     `forename` VARCHAR(45),
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS `user` (
 );
 
 CREATE TABLE IF NOT EXISTS `movie` (
-	`id` INT NOT NULL PRIMARY KEY,
+	`id` INT AUTO_INCREMENT PRIMARY KEY,
     `poster` TEXT,
     `title` VARCHAR(100),
     `description` VARCHAR(10000),
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS `movie` (
 );
 
 CREATE TABLE IF NOT EXISTS `recommendation` (
-	`id` INT NOT NULL PRIMARY KEY,
+	`id` INT AUTO_INCREMENT PRIMARY KEY,
     `user_id` INT NOT NULL,
     `movie_id` INT NOT NULL,
     `content` VARCHAR(15000),
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS `recommendation` (
 );
 
 CREATE TABLE IF NOT EXISTS `comment` (
-	`id` INT NOT NULL PRIMARY KEY,
+	`id` INT AUTO_INCREMENT PRIMARY KEY,
     `user_id` INT NOT NULL,
     `recommendation_id` INT NOT NULL,
     `content` VARCHAR(10000),
