@@ -12,10 +12,14 @@ import {
   Box,
   useTheme,
   Avatar,
-  Divider
+  Divider,
+  ButtonGroup
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import axios from 'axios';
+import MovieIcon from '@mui/icons-material/Movie';
+import PeopleIcon from '@mui/icons-material/People';
+import ChatIcon from '@mui/icons-material/Chat';
 
 // Styled components
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -31,6 +35,13 @@ const UserSection = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   gap: theme.spacing(2),
+}));
+
+const NavigationButtons = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  justifyContent: 'center',
+  gap: theme.spacing(2),
+  marginBottom: theme.spacing(4),
 }));
 
 const MainContent = styled(Container)(({ theme }) => ({
@@ -87,6 +98,10 @@ const Home = () => {
     navigate('/');
   };
 
+  const handleNavigate = (path) => {
+    navigate(path);
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -122,6 +137,32 @@ const Home = () => {
       </StyledAppBar>
 
       <MainContent maxWidth="lg">
+        <NavigationButtons>
+          <ButtonGroup variant="contained" size="large">
+            <Button
+              onClick={() => handleNavigate('/movies')}
+              startIcon={<MovieIcon />}
+              sx={{ px: 4 }}
+            >
+              Movies
+            </Button>
+            <Button
+              onClick={() => handleNavigate('/users')}
+              startIcon={<PeopleIcon />}
+              sx={{ px: 4 }}
+            >
+              Users
+            </Button>
+            <Button
+              onClick={() => handleNavigate('/chat')}
+              startIcon={<ChatIcon />}
+              sx={{ px: 4 }}
+            >
+              Chat
+            </Button>
+          </ButtonGroup>
+        </NavigationButtons>
+
         {loading ? (
           <Typography>Loading recommendations...</Typography>
         ) : error ? (

@@ -81,22 +81,6 @@ public class UserService {
         return userRepository.findMostActiveUsers();
     }
 
-    @Transactional
-    public void followUser(Integer followerId, Integer followedId) {
-        User follower = userRepository.findById(followerId)
-                .orElseThrow(() -> new RuntimeException("Follower not found"));
-        User followed = userRepository.findById(followedId)
-                .orElseThrow(() -> new RuntimeException("Followed user not found"));
-
-        if (!followedUserRepository.isFollowing(followerId, followedId)) {
-            FollowedUser followedUser = new FollowedUser();
-            followedUser.setFollower(follower);
-            followedUser.setFollowed(followed);
-            followedUser.setCreatedAt(LocalDate.now());
-            followedUserRepository.save(followedUser);
-        }
-    }
-
     public List<User> getFollowers(Integer userId) {
         return userRepository.findFollowersByUserId(userId);
     }
@@ -135,6 +119,52 @@ public class UserService {
         return new LoginResponse("Invalid username or password", false, null);
     }
 
+    public List<UserDTO> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        return users.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void followUser(Integer followerId, Integer followedId) {
+        if (followerId.equals(followedId)) {
+            throw new RuntimeException("Users cannot follow themselves");
+        }
+
+        User follower = userRepository.findById(followerId)
+                .orElseThrow(() -> new RuntimeException("Follower user not found"));
+        User followed = userRepository.findById(followedId)
+                .orElseThrow(() -> new RuntimeException("Followed user not found"));
+
+        if (followedUserRepository.isFollowing(followerId, followedId)) {
+            throw new RuntimeException("Already following this user");
+        }
+
+        FollowedUser followedUser = new FollowedUser();
+        followedUser.setFollower(follower);
+        followedUser.setFollowed(followed);
+        followedUser.setCreatedAt(LocalDate.now());
+
+        followedUserRepository.save(followedUser);
+    }
+
+    @Transactional
+    public void unfollowUser(Integer followerId, Integer followedId) {
+        if (followerId.equals(followedId)) {
+            throw new RuntimeException("Users cannot unfollow themselves");
+        }
+
+        // Create a composite key
+        FollowedUserId id = new FollowedUserId(followerId, followedId);
+
+        if (!followedUserRepository.existsById(id)) {
+            throw new RuntimeException("Follow relationship does not exist");
+        }
+
+        followedUserRepository.deleteById(id);
+    }
+
     private UserDTO convertToDTO(User user) {
         List<Integer> recommendationIds = user.getRecommendations().stream()
                 .map(Recommendation::getId)
@@ -155,7 +185,7 @@ public class UserService {
         return new UserDTO(
                 user.getId(),
                 user.getUsername(),
-                null, // nu trimitem parola
+                null, // Don't send password
                 user.getEmail(),
                 user.getSurename(),
                 user.getForename(),
