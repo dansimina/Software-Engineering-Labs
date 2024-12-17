@@ -1,6 +1,30 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import {
+  Container,
+  Box,
+  Typography,
+  TextField,
+  Button,
+  Alert,
+  Paper,
+  CircularProgress
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
 import axios from 'axios';
+
+const StyledPaper = styled(Paper)(({ theme }) => ({
+  marginTop: theme.spacing(8),
+  padding: theme.spacing(4),
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center'
+}));
+
+const StyledForm = styled('form')(({ theme }) => ({
+  width: '100%',
+  marginTop: theme.spacing(3)
+}));
 
 const Register = () => {
   const navigate = useNavigate();
@@ -11,7 +35,7 @@ const Register = () => {
     surename: '',
     forename: '',
     description: '',
-    role: 'USER' // Adding default role
+    role: 'USER'
   });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,9 +81,7 @@ const Register = () => {
       const response = await axios.post('http://localhost:8080/api/v1/user/save', formData);
       
       if (response.data) {
-        // Registration successful
         setIsSubmitting(false);
-        // Redirect to login page
         navigate('/', { 
           state: { 
             message: 'Registration successful! Please login.' 
@@ -80,120 +102,118 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">
-            Create your account
-          </h2>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm space-y-4">
-            <div>
-              <label htmlFor="username" className="sr-only">Username</label>
-              <input
-                id="username"
-                type="text"
-                name="username"
-                required
-                className="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                placeholder="Username"
-                value={formData.username}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">Password</label>
-              <input
-                id="password"
-                type="password"
-                name="password"
-                required
-                className="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                placeholder="Password"
-                value={formData.password}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label htmlFor="email" className="sr-only">Email</label>
-              <input
-                id="email"
-                type="email"
-                name="email"
-                required
-                className="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                placeholder="Email"
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label htmlFor="surename" className="sr-only">Surname</label>
-              <input
-                id="surename"
-                type="text"
-                name="surename"
-                required
-                className="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                placeholder="Surname"
-                value={formData.surename}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label htmlFor="forename" className="sr-only">Forename</label>
-              <input
-                id="forename"
-                type="text"
-                name="forename"
-                required
-                className="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                placeholder="Forename"
-                value={formData.forename}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label htmlFor="description" className="sr-only">Description</label>
-              <textarea
-                id="description"
-                name="description"
-                className="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                placeholder="Tell us about yourself (optional)"
-                value={formData.description}
-                onChange={handleChange}
-                rows="3"
-              />
-            </div>
-          </div>
+    <Container component="main" maxWidth="xs">
+      <StyledPaper elevation={3}>
+        <Typography component="h1" variant="h5" gutterBottom>
+          Create your account
+        </Typography>
+
+        <StyledForm onSubmit={handleSubmit}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <TextField
+              required
+              fullWidth
+              id="username"
+              name="username"
+              label="Username"
+              value={formData.username}
+              onChange={handleChange}
+              autoFocus
+            />
+
+            <TextField
+              required
+              fullWidth
+              id="password"
+              name="password"
+              label="Password"
+              type="password"
+              value={formData.password}
+              onChange={handleChange}
+            />
+
+            <TextField
+              required
+              fullWidth
+              id="email"
+              name="email"
+              label="Email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+            />
+
+            <TextField
+              required
+              fullWidth
+              id="surename"
+              name="surename"
+              label="Surname"
+              value={formData.surename}
+              onChange={handleChange}
+            />
+
+            <TextField
+              required
+              fullWidth
+              id="forename"
+              name="forename"
+              label="Forename"
+              value={formData.forename}
+              onChange={handleChange}
+            />
+
+            <TextField
+              fullWidth
+              id="description"
+              name="description"
+              label="Tell us about yourself (optional)"
+              multiline
+              rows={3}
+              value={formData.description}
+              onChange={handleChange}
+            />
+          </Box>
 
           {error && (
-            <div className="text-red-500 text-sm text-center">
+            <Alert severity="error" sx={{ mt: 2 }}>
               {error}
-            </div>
+            </Alert>
           )}
 
-          <div>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white 
-                ${isSubmitting ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'} 
-                focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            disabled={isSubmitting}
+            sx={{ mt: 3, mb: 2 }}
+          >
+            {isSubmitting ? (
+              <>
+                <CircularProgress size={24} sx={{ mr: 1 }} color="inherit" />
+                Registering...
+              </>
+            ) : (
+              'Register'
+            )}
+          </Button>
+
+          <Box textAlign="center">
+            <Link 
+              to="/"
+              style={{ 
+                textDecoration: 'none',
+                color: 'primary'
+              }}
             >
-              {isSubmitting ? 'Registering...' : 'Register'}
-            </button>
-          </div>
-          
-          <div className="text-sm text-center">
-            <Link to="/" className="font-medium text-indigo-600 hover:text-indigo-500">
-              Already have an account? Sign in
+              <Typography variant="body2" color="primary">
+                Already have an account? Sign in
+              </Typography>
             </Link>
-          </div>
-        </form>
-      </div>
-    </div>
+          </Box>
+        </StyledForm>
+      </StyledPaper>
+    </Container>
   );
 };
 

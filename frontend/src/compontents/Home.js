@@ -1,11 +1,60 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  Container,
+  Grid,
+  Card,
+  CardContent,
+  Box,
+  useTheme,
+  Avatar,
+  Divider
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
 import axios from 'axios';
+
+// Styled components
+const StyledAppBar = styled(AppBar)(({ theme }) => ({
+  backgroundColor: theme.palette.background.paper,
+  color: theme.palette.text.primary,
+}));
+
+const StyledToolbar = styled(Toolbar)({
+  justifyContent: 'space-between',
+});
+
+const UserSection = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(2),
+}));
+
+const MainContent = styled(Container)(({ theme }) => ({
+  marginTop: theme.spacing(4),
+  marginBottom: theme.spacing(4),
+}));
+
+const RecommendationCard = styled(Card)(({ theme }) => ({
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  transition: 'transform 0.2s ease-in-out',
+  '&:hover': {
+    transform: 'translateY(-4px)',
+  },
+}));
 
 const Home = () => {
   const navigate = useNavigate();
+  const theme = useTheme();
   const [user, setUser] = useState(null);
-  const [movies, setMovies] = useState([]);
+  const [recommendations, setRecommendations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -13,17 +62,23 @@ const Home = () => {
       navigate('/');
       return;
     }
-    setUser(JSON.parse(userData));
-    fetchMovies();
+    const parsedUser = JSON.parse(userData);
+    setUser(parsedUser);
+    fetchRecommendations(parsedUser.id);
   }, [navigate]);
 
-  const fetchMovies = async () => {
+  const fetchRecommendations = async (userId) => {
     try {
-      // Add your movie fetching logic here
-      // const response = await axios.get('http://localhost:8080/api/v1/movies');
-      // setMovies(response.data);
+      setLoading(true);
+      const response = await axios.get(
+        `http://localhost:8080/api/v1/recommendations/followed/${userId}`
+      );
+      setRecommendations(response.data);
     } catch (error) {
-      console.error('Error fetching movies:', error);
+      console.error('Error fetching recommendations:', error);
+      setError('Failed to load recommendations');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -32,47 +87,109 @@ const Home = () => {
     navigate('/');
   };
 
-  return (
-    <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-900">Movie Recommendations</h1>
-            </div>
-            <div className="flex items-center">
-              {user && (
-                <div className="flex items-center space-x-4">
-                  <span className="text-gray-700">Welcome, {user.username}</span>
-                  <button
-                    onClick={handleLogout}
-                    className="px-4 py-2 text-sm text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
-                  >
-                    Logout
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {/* Add your movie cards or content here */}
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-4">
-                <h3 className="text-lg font-medium text-gray-900">Welcome to Movie Recommendations</h3>
-                <p className="mt-2 text-gray-600">
-                  Start exploring movies and sharing your recommendations with others!
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
-    </div>
+  return (
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
+      <StyledAppBar position="static" elevation={1}>
+        <StyledToolbar>
+          <Typography variant="h6" component="h1" color="text.primary" sx={{ fontWeight: 'bold' }}>
+            Movie Recommendations
+          </Typography>
+          
+          {user && (
+            <UserSection>
+              <Typography variant="body1" color="text.secondary">
+                Welcome, {user.username}
+              </Typography>
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={handleLogout}
+                size="small"
+              >
+                Logout
+              </Button>
+            </UserSection>
+          )}
+        </StyledToolbar>
+      </StyledAppBar>
+
+      <MainContent maxWidth="lg">
+        {loading ? (
+          <Typography>Loading recommendations...</Typography>
+        ) : error ? (
+          <Typography color="error">{error}</Typography>
+        ) : (
+          <Grid container spacing={3}>
+            {recommendations.length === 0 ? (
+              <Grid item xs={12}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      No recommendations yet
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Follow other users to see their movie recommendations here!
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ) : (
+              recommendations.map((recommendation) => (
+                <Grid item xs={12} md={6} key={recommendation.id}>
+                  <RecommendationCard elevation={2}>
+                    <CardContent>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}>
+                          {recommendation.user.username.charAt(0).toUpperCase()}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                            {recommendation.user.username}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {formatDate(recommendation.createdAt)}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      
+                      <Typography variant="h6" gutterBottom>
+                        {recommendation.movie.title}
+                      </Typography>
+                      
+                      <Divider sx={{ my: 1.5 }} />
+                      
+                      <Typography variant="body2" color="text.secondary" sx={{ 
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 4,
+                        WebkitBoxOrient: 'vertical',
+                      }}>
+                        {recommendation.content}
+                      </Typography>
+                      
+                      <Box sx={{ mt: 2 }}>
+                        <Typography variant="caption" color="text.secondary">
+                          {recommendation.comments?.length || 0} comments
+                        </Typography>
+                      </Box>
+                    </CardContent>
+                  </RecommendationCard>
+                </Grid>
+              ))
+            )}
+          </Grid>
+        )}
+      </MainContent>
+    </Box>
   );
 };
 

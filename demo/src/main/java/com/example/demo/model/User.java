@@ -57,6 +57,7 @@ public class User {
     public Integer getId() {
         return id;
     }
+    
 
     public String getUsername() {
         return username;

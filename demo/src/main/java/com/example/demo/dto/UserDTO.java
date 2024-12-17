@@ -1,10 +1,5 @@
 package com.example.demo.dto;
 
-import com.example.demo.model.Comment;
-import com.example.demo.model.FollowedUser;
-import com.example.demo.model.Recommendation;
-import jakarta.persistence.*;
-
 import java.time.LocalDate;
 import java.util.List;
 
@@ -18,12 +13,19 @@ public class UserDTO {
     private String role;
     private String description;
     private LocalDate registrationDate;
-    private List<Recommendation> recommendations;
-    private List<Comment> comments;
-    private List<FollowedUser> following;
-    private List<FollowedUser> followers;
+    private List<Integer> recommendationIds;
+    private List<Integer> commentIds;
+    private List<Integer> followingIds;
+    private List<Integer> followerIds;
 
-    public UserDTO(Integer id, String username, String password, String email, String surename, String forename, String role, String description, LocalDate registrationDate, List<Recommendation> recommendations, List<Comment> comments, List<FollowedUser> following, List<FollowedUser> followers) {
+    public UserDTO() {
+    }
+
+    public UserDTO(Integer id, String username, String password, String email,
+                   String surename, String forename, String role, String description,
+                   LocalDate registrationDate, List<Integer> recommendationIds,
+                   List<Integer> commentIds, List<Integer> followingIds,
+                   List<Integer> followerIds) {
         this.id = id;
         this.username = username;
         this.password = password;
@@ -33,15 +35,13 @@ public class UserDTO {
         this.role = role;
         this.description = description;
         this.registrationDate = registrationDate;
-        this.recommendations = recommendations;
-        this.comments = comments;
-        this.following = following;
-        this.followers = followers;
+        this.recommendationIds = recommendationIds;
+        this.commentIds = commentIds;
+        this.followingIds = followingIds;
+        this.followerIds = followerIds;
     }
 
-    public UserDTO() {
-    }
-
+    // Getters and Setters
     public Integer getId() {
         return id;
     }
@@ -114,36 +114,36 @@ public class UserDTO {
         this.registrationDate = registrationDate;
     }
 
-    public List<Recommendation> getRecommendations() {
-        return recommendations;
+    public List<Integer> getRecommendationIds() {
+        return recommendationIds;
     }
 
-    public void setRecommendations(List<Recommendation> recommendations) {
-        this.recommendations = recommendations;
+    public void setRecommendationIds(List<Integer> recommendationIds) {
+        this.recommendationIds = recommendationIds;
     }
 
-    public List<Comment> getComments() {
-        return comments;
+    public List<Integer> getCommentIds() {
+        return commentIds;
     }
 
-    public void setComments(List<Comment> comments) {
-        this.comments = comments;
+    public void setCommentIds(List<Integer> commentIds) {
+        this.commentIds = commentIds;
     }
 
-    public List<FollowedUser> getFollowing() {
-        return following;
+    public List<Integer> getFollowingIds() {
+        return followingIds;
     }
 
-    public void setFollowing(List<FollowedUser> following) {
-        this.following = following;
+    public void setFollowingIds(List<Integer> followingIds) {
+        this.followingIds = followingIds;
     }
 
-    public List<FollowedUser> getFollowers() {
-        return followers;
+    public List<Integer> getFollowerIds() {
+        return followerIds;
     }
 
-    public void setFollowers(List<FollowedUser> followers) {
-        this.followers = followers;
+    public void setFollowerIds(List<Integer> followerIds) {
+        this.followerIds = followerIds;
     }
 
     @Override
@@ -151,17 +151,16 @@ public class UserDTO {
         return "UserDTO{" +
                 "id=" + id +
                 ", username='" + username + '\'' +
-                ", password='" + password + '\'' +
                 ", email='" + email + '\'' +
                 ", surename='" + surename + '\'' +
                 ", forename='" + forename + '\'' +
                 ", role='" + role + '\'' +
                 ", description='" + description + '\'' +
                 ", registrationDate=" + registrationDate +
-                ", recommendations=" + recommendations +
-                ", comments=" + comments +
-                ", following=" + following +
-                ", followers=" + followers +
+                ", recommendationIds=" + recommendationIds +
+                ", commentIds=" + commentIds +
+                ", followingIds=" + followingIds +
+                ", followerIds=" + followerIds +
                 '}';
     }
 }

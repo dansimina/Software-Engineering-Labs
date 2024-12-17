@@ -4,9 +4,7 @@ import com.example.demo.data.access.FollowedUserRepository;
 import com.example.demo.data.access.UserRepository;
 import com.example.demo.dto.LoginDTO;
 import com.example.demo.dto.UserDTO;
-import com.example.demo.model.FollowedUser;
-import com.example.demo.model.LoginResponse;
-import com.example.demo.model.User;
+import com.example.demo.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +13,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -107,33 +106,66 @@ public class UserService {
     }
 
     public LoginResponse loginUser(LoginDTO loginDTO) {
-        User user = userRepository.findByUsername(loginDTO.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        System.out.println("Attempting login with username: " + loginDTO.getUsername());
 
-        // In a real application, you should use a password encoder
-        if (user.getPassword().equals(loginDTO.getPassword())) {
-            UserDTO userDTO = convertToDTO(user);
-            return new LoginResponse("Login Success", true, userDTO);
+        Optional<User> userOptional = userRepository.findByUsername(loginDTO.getUsername());
+        System.out.println("User found in database: " + userOptional.isPresent());
+
+        if (userOptional.isEmpty()) {
+            return new LoginResponse("Invalid username or password", false, null);
         }
 
-        return new LoginResponse("Login Failed", false, null);
+        User user = userOptional.get();
+        System.out.println("Retrieved password: " + user.getPassword());
+        System.out.println("Provided password: " + loginDTO.getPassword());
+
+        if (user.getPassword().equals(loginDTO.getPassword())) {
+            try {
+                System.out.println("Passwords match, converting to DTO");
+                UserDTO userDTO = convertToDTO(user);
+                System.out.println("DTO conversion successful: " + userDTO);
+                return new LoginResponse("Login Success", true, userDTO);
+            } catch (Exception e) {
+                System.out.println("Error during DTO conversion: " + e.getMessage());
+                e.printStackTrace();
+                return new LoginResponse("An error occurred", false, null);
+            }
+        }
+
+        return new LoginResponse("Invalid username or password", false, null);
     }
 
     private UserDTO convertToDTO(User user) {
+        List<Integer> recommendationIds = user.getRecommendations().stream()
+                .map(Recommendation::getId)
+                .collect(Collectors.toList());
+
+        List<Integer> commentIds = user.getComments().stream()
+                .map(Comment::getId)
+                .collect(Collectors.toList());
+
+        List<Integer> followingIds = user.getFollowing().stream()
+                .map(fu -> fu.getFollowed().getId())
+                .collect(Collectors.toList());
+
+        List<Integer> followerIds = user.getFollowers().stream()
+                .map(fu -> fu.getFollower().getId())
+                .collect(Collectors.toList());
+
         return new UserDTO(
                 user.getId(),
                 user.getUsername(),
-                null, // Don't send password back
+                null, // nu trimitem parola
                 user.getEmail(),
                 user.getSurename(),
                 user.getForename(),
                 user.getRole(),
                 user.getDescription(),
                 user.getRegistrationDate(),
-                user.getRecommendations(),
-                user.getComments(),
-                user.getFollowing(),
-                user.getFollowers()
+                recommendationIds,
+                commentIds,
+                followingIds,
+                followerIds
         );
     }
 }

@@ -20,6 +20,9 @@ public class Movie {
     @Column(name = "poster", columnDefinition = "TEXT")
     private String poster;
 
+    @Column(name = "trailer", columnDefinition = "TEXT")
+    private String trailer;
+
     @Column(name = "title", length = 100)
     private String title;
 

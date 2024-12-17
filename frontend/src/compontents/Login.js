@@ -1,21 +1,44 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import {
+  Button,
+  TextField,
+  Box,
+  Typography,
+  Container,
+  Paper,
+  Alert,
+  CircularProgress
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
+import axios from 'axios';
+
+// Styled components
+const StyledPaper = styled(Paper)(({ theme }) => ({
+  marginTop: theme.spacing(8),
+  padding: theme.spacing(4),
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center'
+}));
+
+const StyledForm = styled('form')(({ theme }) => ({
+  width: '100%',
+  marginTop: theme.spacing(1)
+}));
 
 function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
-  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
-    // Set success message from navigation state if it exists
     if (location.state?.message) {
       setSuccessMessage(location.state.message);
-      // Clear the navigation state
       window.history.replaceState({}, document.title);
     }
   }, [location]);
@@ -49,9 +72,7 @@ function Login() {
       });
 
       if (response.data.status) {
-        // Store user data in localStorage
         localStorage.setItem('user', JSON.stringify(response.data.user));
-        // Redirect to home page
         navigate('/home');
       } else {
         setError(response.data.message || 'Invalid username or password');
@@ -69,74 +90,83 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to your account
-          </h2>
-        </div>
+    <Container component="main" maxWidth="xs">
+      <StyledPaper elevation={3}>
+        <Typography component="h1" variant="h5">
+          Sign in to your account
+        </Typography>
 
         {successMessage && (
-          <div className="mb-4 p-4 text-sm text-center text-green-700 bg-green-100 rounded-md">
+          <Alert severity="success" sx={{ width: '100%', mt: 2 }}>
             {successMessage}
-          </div>
+          </Alert>
         )}
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="username" className="sr-only">Username</label>
-              <input
-                id="username"
-                type="text"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">Password</label>
-              <input
-                id="password"
-                type="password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-          </div>
+        <StyledForm onSubmit={handleSubmit}>
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            id="username"
+            label="Username"
+            name="username"
+            autoComplete="username"
+            autoFocus
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            name="password"
+            label="Password"
+            type="password"
+            id="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
 
           {error && (
-            <div className="text-red-500 text-sm text-center bg-red-50 p-2 rounded">
+            <Alert severity="error" sx={{ mt: 2 }}>
               {error}
-            </div>
+            </Alert>
           )}
 
-          <div>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white 
-                ${isSubmitting ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'} 
-                focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
-            >
-              {isSubmitting ? 'Signing in...' : 'Sign in'}
-            </button>
-          </div>
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            sx={{ mt: 3, mb: 2 }}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <CircularProgress size={24} sx={{ mr: 1 }} color="inherit" />
+                Signing in...
+              </>
+            ) : (
+              'Sign in'
+            )}
+          </Button>
 
-          <div className="text-sm text-center">
-            <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
-              Don't have an account? Register
+          <Box textAlign="center">
+            <Link 
+              to="/register"
+              style={{ 
+                textDecoration: 'none',
+                color: 'primary.main'
+              }}
+            >
+              <Typography variant="body2" color="primary">
+                Don't have an account? Register
+              </Typography>
             </Link>
-          </div>
-        </form>
-      </div>
-    </div>
+          </Box>
+        </StyledForm>
+      </StyledPaper>
+    </Container>
   );
 }
 

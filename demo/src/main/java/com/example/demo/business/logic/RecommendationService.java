@@ -61,4 +61,8 @@ public class RecommendationService {
     public List<Recommendation> getMostCommentedRecommendations() {
         return recommendationRepository.findMostCommentedRecommendations();
     }
+
+    public List<Recommendation> getRecommendationsFromFollowedUsers(Integer userId) {
+        return recommendationRepository.findRecommendationsFromFollowedUsers(userId);
+    }
 }
