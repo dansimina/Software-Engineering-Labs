@@ -1,7 +1,7 @@
 package com.example.demo.presentation;
 
 import com.example.demo.business.logic.RecommendationService;
-import com.example.demo.model.Recommendation;
+import com.example.demo.dto.RecommendationDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,9 +16,9 @@ public class RecommendationController {
     private RecommendationService recommendationService;
 
     @GetMapping("/followed/{userId}")
-    public ResponseEntity<List<Recommendation>> getRecommendationsFromFollowedUsers(
+    public ResponseEntity<List<RecommendationDTO>> getRecommendationsFromFollowedUsers(
             @PathVariable Integer userId) {
-        List<Recommendation> recommendations =
+        List<RecommendationDTO> recommendations =
                 recommendationService.getRecommendationsFromFollowedUsers(userId);
         return ResponseEntity.ok(recommendations);
     }

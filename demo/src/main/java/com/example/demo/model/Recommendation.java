@@ -16,11 +16,11 @@ public class Recommendation {
     @Column(name = "id")
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)  // Changed from LAZY to EAGER
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)  // Changed from LAZY to EAGER
     @JoinColumn(name = "movie_id", nullable = false)
     private Movie movie;
 

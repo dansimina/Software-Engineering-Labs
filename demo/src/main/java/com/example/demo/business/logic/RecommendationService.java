@@ -3,6 +3,9 @@ package com.example.demo.business.logic;
 import com.example.demo.data.access.MovieRepository;
 import com.example.demo.data.access.RecommendationRepository;
 import com.example.demo.data.access.UserRepository;
+import com.example.demo.dto.MovieDTO;
+import com.example.demo.dto.RecommendationDTO;
+import com.example.demo.dto.UserDTO;
 import jakarta.transaction.Transactional;
 import com.example.demo.model.Movie;
 import com.example.demo.model.Recommendation;
@@ -13,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class RecommendationService {
@@ -62,7 +66,35 @@ public class RecommendationService {
         return recommendationRepository.findMostCommentedRecommendations();
     }
 
-    public List<Recommendation> getRecommendationsFromFollowedUsers(Integer userId) {
-        return recommendationRepository.findRecommendationsFromFollowedUsers(userId);
+    public List<RecommendationDTO> getRecommendationsFromFollowedUsers(Integer userId) {
+        List<Recommendation> recommendations = recommendationRepository.findRecommendationsFromFollowedUsers(userId);
+        return recommendations.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    private RecommendationDTO convertToDTO(Recommendation recommendation) {
+        RecommendationDTO dto = new RecommendationDTO();
+        dto.setId(recommendation.getId());
+        dto.setContent(recommendation.getContent());
+        dto.setCreatedAt(recommendation.getCreatedAt());
+
+        // Set movie data
+        MovieDTO movieDTO = new MovieDTO();
+        movieDTO.setId(recommendation.getMovie().getId());
+        movieDTO.setTitle(recommendation.getMovie().getTitle());
+        movieDTO.setPoster(recommendation.getMovie().getPoster());
+        dto.setMovie(movieDTO);
+
+        // Set user data
+        UserDTO userDTO = new UserDTO();
+        userDTO.setId(recommendation.getUser().getId());
+        userDTO.setUsername(recommendation.getUser().getUsername());
+        dto.setUser(userDTO);
+
+        // Set comment count
+        dto.setCommentCount(recommendation.getComments() != null ? recommendation.getComments().size() : 0);
+
+        return dto;
     }
 }
