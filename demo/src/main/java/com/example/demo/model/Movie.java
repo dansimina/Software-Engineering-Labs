@@ -17,7 +17,8 @@ public class Movie {
     @Column(name = "id")
     private Integer id;
 
-    @Column(name = "poster", columnDefinition = "TEXT")
+    @Column(name = "poster", columnDefinition = "LONGTEXT")
+    @Lob // Adding LOB annotation for large objects
     private String poster;
 
     @Column(name = "trailer", columnDefinition = "TEXT")
@@ -132,5 +133,13 @@ public class Movie {
 
     public void setRecommendations(List<Recommendation> recommendations) {
         this.recommendations = recommendations;
+    }
+
+    public String getTrailer() {
+        return trailer;
+    }
+
+    public void setTrailer(String trailer) {
+        this.trailer = trailer;
     }
 }

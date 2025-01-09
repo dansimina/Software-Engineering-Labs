@@ -4,11 +4,13 @@ import com.example.demo.business.logic.UserService;
 import com.example.demo.dto.LoginDTO;
 import com.example.demo.dto.UserDTO;
 import com.example.demo.model.LoginResponse;
+import com.example.demo.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @CrossOrigin
@@ -45,5 +47,15 @@ public class LoginController {
     public ResponseEntity<?> unfollowUser(@RequestParam Integer followerId, @RequestParam Integer followedId) {
         userService.unfollowUser(followerId, followedId);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<UserDTO> getUserById(@PathVariable Integer id) {
+        Optional<User> userOptional = userService.findById(id);
+        if (userOptional.isPresent()) {
+            UserDTO userDTO = userService.convertToDTO(userOptional.get());
+            return ResponseEntity.ok(userDTO);
+        }
+        return ResponseEntity.notFound().build();
     }
 }

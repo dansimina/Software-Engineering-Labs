@@ -13,20 +13,13 @@ public class CorsConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
 
-        // Allow all origins - for development only. In production, specify exact origins
-        config.addAllowedOrigin("http://localhost:3000");
-
-        // Allow all HTTP methods
+        // Allow all origins, methods, and headers for development
+        config.addAllowedOriginPattern("*");
         config.addAllowedMethod("*");
-
-        // Allow all headers
         config.addAllowedHeader("*");
+        config.setAllowCredentials(false); // Changed to false since we're allowing all origins
 
-        // Allow credentials
-        config.setAllowCredentials(true);
-
-        // Apply this configuration to all paths
-        source.registerCorsConfiguration("/**", config);
+        source.registerCorsConfiguration("/api/**", config);
 
         return new CorsFilter(source);
     }

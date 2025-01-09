@@ -13,13 +13,17 @@ import {
   useTheme,
   Avatar,
   Divider,
-  ButtonGroup
+  ButtonGroup,
+  CircularProgress
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import axios from 'axios';
 import MovieIcon from '@mui/icons-material/Movie';
 import PeopleIcon from '@mui/icons-material/People';
 import ChatIcon from '@mui/icons-material/Chat';
+import LaunchIcon from '@mui/icons-material/Launch';
+import AddIcon from '@mui/icons-material/Add';
+import MovieFormDialog from './MovieFormDialog';
 
 // Styled components
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -66,6 +70,8 @@ const Home = () => {
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isMovieFormOpen, setIsMovieFormOpen] = useState(false);
+
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -96,6 +102,11 @@ const Home = () => {
   const handleLogout = () => {
     localStorage.removeItem('user');
     navigate('/');
+  };
+
+  const handleMovieFormSuccess = () => {
+    // You could add additional logic here if needed
+    setIsMovieFormOpen(false);
   };
 
   const handleNavigate = (path) => {
@@ -138,33 +149,47 @@ const Home = () => {
 
       <MainContent maxWidth="lg">
         <NavigationButtons>
-          <ButtonGroup variant="contained" size="large">
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <ButtonGroup variant="contained" size="large">
+              <Button
+                onClick={() => handleNavigate('/movies')}
+                startIcon={<MovieIcon />}
+                sx={{ px: 4 }}
+              >
+                Movies
+              </Button>
+              <Button
+                onClick={() => handleNavigate('/users')}
+                startIcon={<PeopleIcon />}
+                sx={{ px: 4 }}
+              >
+                Users
+              </Button>
+              <Button
+                onClick={() => handleNavigate('/chat')}
+                startIcon={<ChatIcon />}
+                sx={{ px: 4 }}
+              >
+                Chat
+              </Button>
+            </ButtonGroup>
+            
             <Button
-              onClick={() => handleNavigate('/movies')}
-              startIcon={<MovieIcon />}
-              sx={{ px: 4 }}
+              variant="contained"
+              color="secondary"
+              startIcon={<AddIcon />}
+              onClick={() => setIsMovieFormOpen(true)}
+              sx={{ height: '100%' }}
             >
-              Movies
+              Add Movie
             </Button>
-            <Button
-              onClick={() => handleNavigate('/users')}
-              startIcon={<PeopleIcon />}
-              sx={{ px: 4 }}
-            >
-              Users
-            </Button>
-            <Button
-              onClick={() => handleNavigate('/chat')}
-              startIcon={<ChatIcon />}
-              sx={{ px: 4 }}
-            >
-              Chat
-            </Button>
-          </ButtonGroup>
+          </Box>
         </NavigationButtons>
 
         {loading ? (
-          <Typography>Loading recommendations...</Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+            <CircularProgress />
+          </Box>
         ) : error ? (
           <Typography color="error">{error}</Typography>
         ) : (
@@ -188,39 +213,118 @@ const Home = () => {
                   <RecommendationCard elevation={2}>
                     <CardContent>
                       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                        <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}>
+                        <Avatar 
+                          sx={{ 
+                            bgcolor: 'primary.main', 
+                            mr: 2,
+                            width: 48,
+                            height: 48
+                          }}
+                        >
                           {recommendation.user.username.charAt(0).toUpperCase()}
                         </Avatar>
                         <Box>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                            {recommendation.user.username}
-                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                              {recommendation.user.username}
+                            </Typography>
+                            <Button
+                              size="small"
+                              startIcon={<LaunchIcon />}
+                              onClick={() => handleNavigate(`/users/${recommendation.user.id}`)}
+                              sx={{ minWidth: 0, p: 0 }}
+                            >
+                              Profile
+                            </Button>
+                          </Box>
                           <Typography variant="caption" color="text.secondary">
                             {formatDate(recommendation.createdAt)}
                           </Typography>
                         </Box>
                       </Box>
                       
-                      <Typography variant="h6" gutterBottom>
-                        {recommendation.movie.title}
-                      </Typography>
+                      <Box 
+                        sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: 2, 
+                          mb: 2 
+                        }}
+                      >
+                        {recommendation.movie?.poster ? (
+                          <img
+                            src={recommendation.movie.poster}
+                            alt={recommendation.movie.title}
+                            style={{
+                              width: 60,
+                              height: 90,
+                              objectFit: 'cover',
+                              borderRadius: theme.shape.borderRadius
+                            }}
+                          />
+                        ) : (
+                          <Box
+                            sx={{
+                              width: 60,
+                              height: 90,
+                              bgcolor: 'grey.200',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              borderRadius: 1
+                            }}
+                          >
+                            <MovieIcon sx={{ fontSize: 32, color: 'grey.400' }} />
+                          </Box>
+                        )}
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="h6" gutterBottom>
+                            {recommendation.movie.title}
+                          </Typography>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => handleNavigate(`/movies/${recommendation.movie.id}`)}
+                          >
+                            View Movie
+                          </Button>
+                        </Box>
+                      </Box>
                       
                       <Divider sx={{ my: 1.5 }} />
                       
-                      <Typography variant="body2" color="text.secondary" sx={{ 
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 4,
-                        WebkitBoxOrient: 'vertical',
-                      }}>
+                      <Typography 
+                        variant="body2" 
+                        color="text.secondary" 
+                        sx={{ 
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 3,
+                          WebkitBoxOrient: 'vertical',
+                          mb: 2,
+                          minHeight: '4.5em'
+                        }}
+                      >
                         {recommendation.content}
                       </Typography>
                       
-                      <Box sx={{ mt: 2 }}>
+                      <Box sx={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        mt: 'auto'
+                      }}>
                         <Typography variant="caption" color="text.secondary">
                           {recommendation.comments?.length || 0} comments
                         </Typography>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          onClick={() => handleNavigate(`/recommendations/${recommendation.id}`)}
+                        >
+                          Read Full Recommendation
+                        </Button>
                       </Box>
                     </CardContent>
                   </RecommendationCard>
@@ -230,6 +334,12 @@ const Home = () => {
           </Grid>
         )}
       </MainContent>
+
+      <MovieFormDialog
+        open={isMovieFormOpen}
+        onClose={() => setIsMovieFormOpen(false)}
+        onSuccess={handleMovieFormSuccess}
+      />
     </Box>
   );
 };

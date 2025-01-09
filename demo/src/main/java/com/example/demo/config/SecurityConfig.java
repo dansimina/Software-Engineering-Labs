@@ -1,4 +1,3 @@
-// In SecurityConfig.java
 package com.example.demo.config;
 
 import org.springframework.context.annotation.Bean;
@@ -19,10 +18,13 @@ public class SecurityConfig {
                 .cors().and()
                 .csrf().disable()
                 .authorizeHttpRequests(authz -> authz
+                        .requestMatchers("/api/v1/movies").permitAll()
+                        .requestMatchers("/api/v1/movies/**").permitAll()  // Allow all movie-related endpoints
+                        .requestMatchers("/api/v1/recommendations/**").permitAll()
                         .requestMatchers("/api/v1/user/**").permitAll()
-                        .requestMatchers("/api/v1/recommendations/**").permitAll()  // Add this line
-                        .anyRequest().authenticated()
-                );
+                        .anyRequest().permitAll()  // For development, allow all requests
+                )
+                .headers(headers -> headers.frameOptions().disable());
 
         return http.build();
     }

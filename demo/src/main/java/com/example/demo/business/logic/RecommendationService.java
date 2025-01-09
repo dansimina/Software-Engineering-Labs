@@ -62,6 +62,10 @@ public class RecommendationService {
         return recommendationRepository.findByMovieId(movieId);
     }
 
+    public Optional<Recommendation> findById(Integer id) {
+        return recommendationRepository.findById(id);
+    }
+
     public List<Recommendation> getMostCommentedRecommendations() {
         return recommendationRepository.findMostCommentedRecommendations();
     }
@@ -73,7 +77,7 @@ public class RecommendationService {
                 .collect(Collectors.toList());
     }
 
-    private RecommendationDTO convertToDTO(Recommendation recommendation) {
+    public RecommendationDTO convertToDTO(Recommendation recommendation) {
         RecommendationDTO dto = new RecommendationDTO();
         dto.setId(recommendation.getId());
         dto.setContent(recommendation.getContent());

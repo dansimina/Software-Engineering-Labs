@@ -165,7 +165,7 @@ public class UserService {
         followedUserRepository.deleteById(id);
     }
 
-    private UserDTO convertToDTO(User user) {
+    public UserDTO convertToDTO(User user) {
         List<Integer> recommendationIds = user.getRecommendations().stream()
                 .map(Recommendation::getId)
                 .collect(Collectors.toList());

@@ -30,16 +30,22 @@ public class CommentService {
 
     @Transactional
     public Comment createComment(Integer userId, Integer recommendationId, String content) {
+        if (content == null || content.trim().isEmpty()) {
+            throw new IllegalArgumentException("Comment content cannot be empty");
+        }
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
         Recommendation recommendation = recommendationRepository.findById(recommendationId)
                 .orElseThrow(() -> new RuntimeException("Recommendation not found"));
 
         Comment comment = new Comment();
         comment.setUser(user);
         comment.setRecommendation(recommendation);
-        comment.setContent(content);
+        comment.setContent(content.trim());
         comment.setCreatedAt(LocalDate.now());
+
         return commentRepository.save(comment);
     }
 

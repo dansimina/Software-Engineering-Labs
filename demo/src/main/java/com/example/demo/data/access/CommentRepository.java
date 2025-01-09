@@ -2,22 +2,17 @@ package com.example.demo.data.access;
 
 import com.example.demo.model.Comment;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, Integer> {
-    // Find comments by user
-    List<Comment> findByUserId(Integer userId);
-
-    // Find comments for a specific recommendation
+    @Query("SELECT c FROM Comment c WHERE c.recommendation.id = ?1 ORDER BY c.createdAt DESC")
     List<Comment> findByRecommendationId(Integer recommendationId);
 
-    // Find comments created after a specific date
-    List<Comment> findByCreatedAtAfter(LocalDate date);
+    List<Comment> findByUserId(Integer userId);
 
-    // Count comments for a specific recommendation
     Integer countByRecommendationId(Integer recommendationId);
 }
