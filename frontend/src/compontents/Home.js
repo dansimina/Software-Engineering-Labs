@@ -24,6 +24,7 @@ import ChatIcon from '@mui/icons-material/Chat';
 import LaunchIcon from '@mui/icons-material/Launch';
 import AddIcon from '@mui/icons-material/Add';
 import MovieFormDialog from './MovieFormDialog';
+import UserFormDialog from './UserFormDialog';
 
 // Styled components
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -71,7 +72,7 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isMovieFormOpen, setIsMovieFormOpen] = useState(false);
-
+  const [isUserFormOpen, setIsUserFormOpen] = useState(false);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -105,8 +106,15 @@ const Home = () => {
   };
 
   const handleMovieFormSuccess = () => {
-    // You could add additional logic here if needed
     setIsMovieFormOpen(false);
+  };
+
+  const handleUserFormSuccess = async () => {
+    setIsUserFormOpen(false);
+    // Optionally refresh data if needed
+    if (user?.id) {
+      await fetchRecommendations(user.id);
+    }
   };
 
   const handleNavigate = (path) => {
@@ -134,6 +142,15 @@ const Home = () => {
               <Typography variant="body1" color="text.secondary">
                 Welcome, {user.username}
               </Typography>
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => handleNavigate(`/users/${user.id}`)}
+                size="small"
+                sx={{ mr: 1 }}
+              >
+                My Profile
+              </Button>
               <Button
                 variant="outlined"
                 color="primary"
@@ -182,6 +199,16 @@ const Home = () => {
               sx={{ height: '100%' }}
             >
               Add Movie
+            </Button>
+
+            <Button
+              variant="contained"
+              color="secondary"
+              startIcon={<AddIcon />}
+              onClick={() => setIsUserFormOpen(true)}
+              sx={{ height: '100%' }}
+            >
+              Add User
             </Button>
           </Box>
         </NavigationButtons>
@@ -339,6 +366,12 @@ const Home = () => {
         open={isMovieFormOpen}
         onClose={() => setIsMovieFormOpen(false)}
         onSuccess={handleMovieFormSuccess}
+      />
+
+      <UserFormDialog
+        open={isUserFormOpen}
+        onClose={() => setIsUserFormOpen(false)}
+        onSuccess={handleUserFormSuccess}
       />
     </Box>
   );

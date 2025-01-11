@@ -7,8 +7,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.time.LocalDate;
 
 @Entity
-@NoArgsConstructor
-@AllArgsConstructor
 @Table(name = "comment")
 public class Comment {
     @Id
@@ -16,12 +14,12 @@ public class Comment {
     @Column(name = "id")
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.EAGER)  // Changed to EAGER loading
     @JoinColumn(name = "user_id", nullable = false)
     @JsonIgnoreProperties({"password", "email", "recommendations", "comments", "following", "followers"})
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)  // Changed to EAGER loading
     @JoinColumn(name = "recommendation_id", nullable = false)
     @JsonIgnoreProperties({"user", "comments"})
     private Recommendation recommendation;
@@ -32,14 +30,13 @@ public class Comment {
     @Column(name = "created_at")
     private LocalDate createdAt;
 
-    // Getters
+    // Getters and Setters
     public Integer getId() { return id; }
     public User getUser() { return user; }
     public Recommendation getRecommendation() { return recommendation; }
     public String getContent() { return content; }
     public LocalDate getCreatedAt() { return createdAt; }
 
-    // Setters
     public void setUser(User user) { this.user = user; }
     public void setRecommendation(Recommendation recommendation) { this.recommendation = recommendation; }
     public void setContent(String content) { this.content = content; }

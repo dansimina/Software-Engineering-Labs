@@ -76,4 +76,34 @@ public class MovieController {
             return ResponseEntity.internalServerError().build();
         }
     }
+
+
+    @PutMapping("/{id}")
+    public ResponseEntity<MovieDTO> updateMovie(@PathVariable Integer id, @RequestBody MovieDTO movieDTO) {
+        try {
+            Optional<Movie> movieOptional = movieService.findById(id);
+            if (movieOptional.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Movie movie = movieOptional.get();
+            movie.setTitle(movieDTO.getTitle());
+            movie.setDescription(movieDTO.getDescription());
+            movie.setReleaseYear(movieDTO.getReleaseYear());
+            movie.setGenres(movieDTO.getGenres());
+            movie.setRuntime(movieDTO.getRuntime());
+            movie.setStars(movieDTO.getStars());
+            movie.setDirector(movieDTO.getDirector());
+            movie.setTrailer(movieDTO.getTrailer());
+            movie.setPoster(movieDTO.getPoster());
+
+            Movie updatedMovie = movieService.save(movie);
+            return ResponseEntity.ok(convertToFullDTO(updatedMovie));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
 }

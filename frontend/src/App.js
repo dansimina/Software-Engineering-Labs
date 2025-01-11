@@ -8,6 +8,7 @@ import MoviePage from "./compontents/MoviePage";
 import Movies from "./compontents/Movies";
 import AddRecommendationPage from './compontents/AddRecommendationPage';
 import RecommendationPage from './compontents/RecommendationPage';
+import Chat from './compontents/Chat';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="/movies/:movieId" element={<MoviePage />} />
           <Route path="/movie/:movieId/add-recommendation" element={<AddRecommendationPage />} />
           <Route path="/recommendations/:recommendationId" element={<RecommendationPage />} />
+          <Route path="/chat" element={<Chat />} />
         </Routes>
       </BrowserRouter>
     </div>

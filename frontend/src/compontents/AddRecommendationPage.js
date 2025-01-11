@@ -76,7 +76,7 @@ const AddRecommendationPage = () => {
 
       setSuccess(true);
       setTimeout(() => {
-        navigate(`/movie/${movieId}`);
+        navigate(`/movies/${movieId}`);
       }, 2000);
     } catch (err) {
       console.error('Error submitting recommendation:', err);
@@ -101,7 +101,7 @@ const AddRecommendationPage = () => {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
-        <IconButton onClick={() => navigate(`/movie/${movieId}`)} color="primary">
+        <IconButton onClick={() => navigate(`/movies/${movieId}`)} color="primary">
           <ArrowBackIcon />
         </IconButton>
         <Typography variant="h4" component="h1">
@@ -168,7 +168,7 @@ const AddRecommendationPage = () => {
           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
             <Button
               variant="outlined"
-              onClick={() => navigate(`/movie/${movieId}`)}
+              onClick={() => navigate(`/movies/${movieId}`)}
               disabled={submitLoading}
             >
               Cancel

@@ -11,7 +11,7 @@ import java.util.Map;
 
 @RestController
 @CrossOrigin
-@RequestMapping("api/v1/comments")
+@RequestMapping("/api/v1/comments")  // Added leading slash
 public class CommentController {
     @Autowired
     private CommentService commentService;
@@ -19,7 +19,9 @@ public class CommentController {
     @GetMapping("/recommendation/{recommendationId}")
     public ResponseEntity<List<Comment>> getRecommendationComments(@PathVariable Integer recommendationId) {
         try {
+            System.out.println("Fetching comments for recommendation ID: " + recommendationId);
             List<Comment> comments = commentService.findByRecommendationId(recommendationId);
+            System.out.println("Found " + comments.size() + " comments");
             return ResponseEntity.ok(comments);
         } catch (Exception e) {
             e.printStackTrace();

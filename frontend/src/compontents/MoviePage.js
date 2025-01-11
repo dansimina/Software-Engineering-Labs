@@ -22,13 +22,15 @@ import AddIcon from '@mui/icons-material/Add';
 import CommentIcon from '@mui/icons-material/Comment';
 import axios from 'axios';
 
+import EditMovieDialog from './EditMovieDialog';
+
 const MovieInfoCard = styled(Card)(({ theme }) => ({
   marginBottom: theme.spacing(4),
 }));
 
 const extractVideoId = (url) => {
   if (!url) return null;
-  
+
   const patterns = [
     /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&]+)/,
     /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([^?]+)/,
@@ -51,6 +53,9 @@ const MoviePage = () => {
   const [error, setError] = useState('');
   const [recommendations, setRecommendations] = useState([]);
   const [videoId, setVideoId] = useState(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState('');
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -73,9 +78,9 @@ const MoviePage = () => {
     try {
       setLoading(true);
       setError('');
-      
+
       const response = await axios.get(`http://localhost:8080/api/v1/movies/${movieId}`);
-      
+
       if (!response.data) {
         throw new Error('No movie data received');
       }
@@ -96,6 +101,25 @@ const MoviePage = () => {
       setRecommendations(response.data);
     } catch (error) {
       console.error('Error fetching recommendations:', error);
+    }
+  };
+
+  const handleEditMovie = async (updatedMovie) => {
+    try {
+      setEditLoading(true);
+      setEditError('');
+
+      const response = await axios.put(`http://localhost:8080/api/v1/movies/${movieId}`, updatedMovie);
+
+      if (response.data) {
+        setMovie(response.data);
+        setIsEditDialogOpen(false);
+      }
+    } catch (err) {
+      console.error('Error updating movie:', err);
+      setEditError(err.response?.data?.message || 'Failed to update movie');
+    } finally {
+      setEditLoading(false);
     }
   };
 
@@ -153,7 +177,7 @@ const MoviePage = () => {
 
   const renderGenres = (genresString) => {
     if (!genresString) return null;
-    
+
     return genresString.split(',').map((genre, index) => (
       <Chip
         key={index}
@@ -202,6 +226,7 @@ const MoviePage = () => {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       {/* Header */}
+
       <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
         <IconButton onClick={() => navigate('/movies')} color="primary">
           <ArrowBackIcon />
@@ -209,6 +234,13 @@ const MoviePage = () => {
         <Typography variant="h4" component="h1">
           {movie.title}
         </Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => setIsEditDialogOpen(true)}
+        >
+          Edit Movie
+        </Button>
       </Box>
 
       {/* Movie Details */}
@@ -327,8 +359,8 @@ const MoviePage = () => {
                 <Card>
                   <CardContent>
                     <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                      <Avatar 
-                        sx={{ 
+                      <Avatar
+                        sx={{
                           bgcolor: 'primary.main',
                           mr: 2
                         }}
@@ -349,7 +381,7 @@ const MoviePage = () => {
                         </Typography>
                       </Box>
                     </Box>
-                    
+
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <CommentIcon fontSize="small" color="action" />
@@ -372,6 +404,14 @@ const MoviePage = () => {
           </Grid>
         )}
       </Box>
+      <EditMovieDialog
+        open={isEditDialogOpen}
+        onClose={() => setIsEditDialogOpen(false)}
+        onSave={handleEditMovie}
+        movie={movie}
+        loading={editLoading}
+        error={editError}
+      />
     </Container>
   );
 };

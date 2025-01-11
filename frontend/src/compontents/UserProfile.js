@@ -82,7 +82,7 @@ const UserProfile = () => {
           followedId: userId
         }
       });
-      fetchUserProfile(); // Refresh profile data
+      fetchUserProfile();
     } catch (error) {
       console.error('Error following user:', error);
     }
@@ -96,7 +96,7 @@ const UserProfile = () => {
           followedId: userId
         }
       });
-      fetchUserProfile(); // Refresh profile data
+      fetchUserProfile();
     } catch (error) {
       console.error('Error unfollowing user:', error);
     }
@@ -215,16 +215,53 @@ const UserProfile = () => {
                     <Typography variant="h6" gutterBottom>
                       {recommendation.movie.title}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" paragraph>
+                    <Typography 
+                      variant="body2" 
+                      color="text.secondary" 
+                      sx={{ 
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: 'vertical',
+                        mb: 2,
+                        minHeight: '4.5em'
+                      }}
+                    >
                       {recommendation.content}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Posted on {formatDate(recommendation.createdAt)}
-                    </Typography>
+                    <Box sx={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      mt: 2
+                    }}>
+                      <Typography variant="caption" color="text.secondary">
+                        Posted on {formatDate(recommendation.createdAt)}
+                      </Typography>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        onClick={() => navigate(`/recommendations/${recommendation.id}`)}
+                      >
+                        View Full Recommendation
+                      </Button>
+                    </Box>
                   </CardContent>
                 </Card>
               </Grid>
             ))}
+            {recommendations.length === 0 && (
+              <Grid item xs={12}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="body1" color="text.secondary" align="center">
+                      No recommendations yet
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            )}
           </Grid>
         </>
       )}
