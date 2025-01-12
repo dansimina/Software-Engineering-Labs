@@ -18,6 +18,8 @@ import { styled } from '@mui/material/styles';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
+import EditIcon from '@mui/icons-material/Edit';
+import UserFormDialog from './UserFormDialog';
 import axios from 'axios';
 
 const ProfileHeader = styled(Box)(({ theme }) => ({
@@ -39,6 +41,7 @@ const UserProfile = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [recommendations, setRecommendations] = useState([]);
 
   useEffect(() => {
@@ -88,6 +91,17 @@ const UserProfile = () => {
     }
   };
 
+  const handleEditSuccess = () => {
+    setIsEditDialogOpen(false);
+    fetchUserProfile();
+    // Update local storage if editing current user
+    if (currentUser?.id === parseInt(userId)) {
+      const updatedUserData = JSON.stringify({...currentUser, ...profile});
+      localStorage.setItem('user', updatedUserData);
+      setCurrentUser(JSON.parse(updatedUserData));
+    }
+  };
+
   const handleUnfollow = async () => {
     try {
       await axios.delete(`http://localhost:8080/api/v1/user/unfollow`, {
@@ -101,6 +115,10 @@ const UserProfile = () => {
       console.error('Error unfollowing user:', error);
     }
   };
+
+  const isCurrentUsersProfile = currentUser?.id === parseInt(userId);
+  const isFollowing = profile?.followerIds?.includes(currentUser?.id);
+  const formatDate = (date) => new Date(date).toLocaleDateString();
 
   if (loading) {
     return (
@@ -117,9 +135,6 @@ const UserProfile = () => {
       </Container>
     );
   }
-
-  const isFollowing = profile?.followerIds?.includes(currentUser?.id);
-  const formatDate = (date) => new Date(date).toLocaleDateString();
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -149,7 +164,16 @@ const UserProfile = () => {
                 <Typography variant="h4" component="h1">
                   {profile.username}
                 </Typography>
-                {currentUser?.id !== parseInt(userId) && (
+                {isCurrentUsersProfile ? (
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    startIcon={<EditIcon />}
+                    onClick={() => setIsEditDialogOpen(true)}
+                  >
+                    Edit Profile
+                  </Button>
+                ) : (
                   <Button
                     variant={isFollowing ? "outlined" : "contained"}
                     color="primary"
@@ -169,6 +193,8 @@ const UserProfile = () => {
             </Box>
           </ProfileHeader>
 
+          {/* Rest of the profile content remains the same... */}
+          {/* Stats cards and recommendations section */}
           <Grid container spacing={3} sx={{ mb: 4 }}>
             <Grid item xs={12} sm={4}>
               <StatsCard>
@@ -215,54 +241,26 @@ const UserProfile = () => {
                     <Typography variant="h6" gutterBottom>
                       {recommendation.movie.title}
                     </Typography>
-                    <Typography 
-                      variant="body2" 
-                      color="text.secondary" 
-                      sx={{ 
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 3,
-                        WebkitBoxOrient: 'vertical',
-                        mb: 2,
-                        minHeight: '4.5em'
-                      }}
-                    >
+                    <Typography variant="body2" color="text.secondary" paragraph>
                       {recommendation.content}
                     </Typography>
-                    <Box sx={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      mt: 2
-                    }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Posted on {formatDate(recommendation.createdAt)}
-                      </Typography>
-                      <Button
-                        variant="contained"
-                        size="small"
-                        onClick={() => navigate(`/recommendations/${recommendation.id}`)}
-                      >
-                        View Full Recommendation
-                      </Button>
-                    </Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Posted on {formatDate(recommendation.createdAt)}
+                    </Typography>
                   </CardContent>
                 </Card>
               </Grid>
             ))}
-            {recommendations.length === 0 && (
-              <Grid item xs={12}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="body1" color="text.secondary" align="center">
-                      No recommendations yet
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            )}
           </Grid>
+
+          {/* Edit Profile Dialog */}
+          <UserFormDialog
+            open={isEditDialogOpen}
+            onClose={() => setIsEditDialogOpen(false)}
+            onSuccess={handleEditSuccess}
+            initialData={profile}
+            isEditing={true}
+          />
         </>
       )}
     </Container>

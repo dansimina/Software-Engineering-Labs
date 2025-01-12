@@ -20,7 +20,6 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PersonIcon from '@mui/icons-material/Person';
 import CommentIcon from '@mui/icons-material/Comment';
 import axios from 'axios';
-import CommentDialog from './CommentDialog';
 
 const RecommendationPage = () => {
   const { recommendationId } = useParams();
@@ -28,7 +27,6 @@ const RecommendationPage = () => {
   const [recommendation, setRecommendation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -41,7 +39,6 @@ const RecommendationPage = () => {
 
   const fetchRecommendation = async () => {
     try {
-      setLoading(true);
       const response = await axios.get(`http://localhost:8080/api/v1/recommendations/${recommendationId}`);
       setRecommendation(response.data);
     } catch (err) {
@@ -50,6 +47,10 @@ const RecommendationPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleViewComments = () => {
+    navigate(`/recommendations/${recommendationId}/comments`);
   };
 
   const formatDate = (dateString) => {
@@ -202,7 +203,7 @@ const RecommendationPage = () => {
                 <Button
                   variant="contained"
                   startIcon={<CommentIcon />}
-                  onClick={() => setIsCommentDialogOpen(true)}
+                  onClick={handleViewComments}
                 >
                   View Comments ({recommendation.comments?.length || 0})
                 </Button>
@@ -211,13 +212,6 @@ const RecommendationPage = () => {
           </Grid>
         </CardContent>
       </Card>
-
-      {/* Comments Dialog */}
-      <CommentDialog
-        open={isCommentDialogOpen}
-        onClose={() => setIsCommentDialogOpen(false)}
-        recommendationId={recommendationId}
-      />
     </Container>
   );
 };

@@ -14,7 +14,9 @@ import {
   ListItemText,
   Divider,
   Avatar,
-  ListItemAvatar
+  ListItemAvatar,
+  useTheme,
+  Badge
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SendIcon from '@mui/icons-material/Send';
@@ -22,6 +24,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const Chat = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
   const [followedUsers, setFollowedUsers] = useState([]);
@@ -30,7 +33,16 @@ const Chat = () => {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [sending, setSending] = useState(false);
   const messagesEndRef = useRef(null);
+  const messageListRef = useRef(null);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
 
   // Load current user and followed users on mount
   useEffect(() => {
@@ -44,24 +56,25 @@ const Chat = () => {
     fetchFollowedUsers(parsedUser.id);
   }, [navigate]);
 
-  // Fetch messages for the last selected user on mount
+  // Set up periodic message refresh
   useEffect(() => {
-    const selectedUserData = localStorage.getItem('selectedUser');
-    if (selectedUserData) {
-      const parsedSelectedUser = JSON.parse(selectedUserData);
-      setSelectedUser(parsedSelectedUser);
-      if (currentUser?.id && parsedSelectedUser?.id) {
-        fetchMessages(currentUser.id, parsedSelectedUser.id);
-      }
+    let intervalId;
+    if (currentUser?.id && selectedUser?.id) {
+      // Initial fetch
+      fetchMessages(currentUser.id, selectedUser.id);
+      
+      // Set up interval for periodic updates
+      intervalId = setInterval(() => {
+        fetchMessages(currentUser.id, selectedUser.id);
+      }, 5000); // Refresh every 5 seconds
     }
-  }, [currentUser]);
 
-  // Scroll to the latest message when messages change
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [currentUser?.id, selectedUser?.id]);
 
   const fetchFollowedUsers = async (userId) => {
     try {
@@ -88,28 +101,27 @@ const Chat = () => {
       const response = await axios.get(`http://localhost:8080/api/v1/messages/between`, {
         params: { userId1, userId2 }
       });
-      console.log('Fetched messages:', response.data); // Debugging log
-      setMessages(response.data || []);
+      setMessages(response.data);
     } catch (error) {
       console.error('Error fetching messages:', error);
       setError('Failed to load messages');
-      setMessages([]);
     }
   };
 
   const handleUserSelect = async (user) => {
     setSelectedUser(user);
-    localStorage.setItem('selectedUser', JSON.stringify(user));
+    setMessages([]);
     if (currentUser?.id && user?.id) {
-      await fetchMessages(currentUser.id, user.id);
+      fetchMessages(currentUser.id, user.id);
     }
   };
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !selectedUser?.id || !currentUser?.id) return;
+    if (!newMessage.trim() || !selectedUser?.id || !currentUser?.id || sending) return;
 
     try {
+      setSending(true);
       const response = await axios.post('http://localhost:8080/api/v1/messages/send', {
         senderId: currentUser.id,
         receiverId: selectedUser.id,
@@ -117,24 +129,31 @@ const Chat = () => {
       });
 
       if (response.data) {
-        const sentMessage = {
-          ...response.data,
-          sender: currentUser,
-          receiver: selectedUser,
-          content: newMessage.trim(),
-        };
-        setMessages(prev => [...prev, sentMessage]);
+        setMessages(prev => [...prev, response.data]);
         setNewMessage('');
       }
     } catch (error) {
       console.error('Error sending message:', error);
       setError('Failed to send message');
+    } finally {
+      setSending(false);
     }
   };
 
   const formatDateTime = (dateString) => {
     if (!dateString) return '';
-    return new Date(dateString).toLocaleString();
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return 'Yesterday ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } else {
+      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
   };
 
   if (loading) {
@@ -157,14 +176,25 @@ const Chat = () => {
       </Box>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
           {error}
         </Alert>
       )}
 
-      <Box sx={{ display: 'flex', gap: 2, height: '70vh' }}>
+      <Box sx={{ 
+        display: 'flex', 
+        gap: 2, 
+        height: 'calc(100vh - 200px)',
+        backgroundColor: theme.palette.background.default,
+        borderRadius: theme.shape.borderRadius,
+        overflow: 'hidden'
+      }}>
         {/* Users List */}
-        <Paper sx={{ width: 300, overflow: 'auto' }}>
+        <Paper sx={{ 
+          width: 300, 
+          overflow: 'auto',
+          borderRadius: theme.shape.borderRadius
+        }}>
           <List>
             {followedUsers.map((user) => (
               <ListItem
@@ -173,18 +203,25 @@ const Chat = () => {
                 selected={selectedUser?.id === user.id}
                 sx={{
                   cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  '&:hover': {
+                    backgroundColor: theme.palette.action.hover,
+                  },
                   '&.Mui-selected': {
-                    bgcolor: 'primary.light',
+                    backgroundColor: theme.palette.primary.light,
+                    '&:hover': {
+                      backgroundColor: theme.palette.primary.light,
+                    }
                   },
                 }}
               >
                 <ListItemAvatar>
-                  <Avatar sx={{ bgcolor: 'primary.main' }}>
+                  <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
                     {user.username?.[0]?.toUpperCase() || '?'}
                   </Avatar>
                 </ListItemAvatar>
                 <ListItemText
-                  primary={user.username || 'Unknown User'}
+                  primary={user.username}
                   secondary={user.forename && user.surename ? 
                     `${user.forename} ${user.surename}` : 
                     'No name provided'}
@@ -202,99 +239,165 @@ const Chat = () => {
           </List>
         </Paper>
 
-        {/* Messages Area */}
-        <Paper sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {/* Chat Area */}
+        <Paper sx={{ 
+          flex: 1, 
+          display: 'flex', 
+          flexDirection: 'column',
+          borderRadius: theme.shape.borderRadius,
+          bgcolor: theme.palette.background.paper
+        }}>
           {selectedUser ? (
             <>
-              <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', bgcolor: 'grey.50' }}>
-                <Typography variant="h6">
-                  Chat with {selectedUser.username}
-                </Typography>
+              {/* Chat Header */}
+              <Box sx={{ 
+                p: 2, 
+                borderBottom: `1px solid ${theme.palette.divider}`,
+                bgcolor: theme.palette.background.paper
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
+                    {selectedUser.username[0].toUpperCase()}
+                  </Avatar>
+                  <Box>
+                    <Typography variant="h6">
+                      {selectedUser.username}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {selectedUser.forename} {selectedUser.surename}
+                    </Typography>
+                  </Box>
+                </Box>
               </Box>
 
-              <List sx={{ flex: 1, overflow: 'auto', p: 2 }}>
+              {/* Messages Area */}
+              <Box 
+                ref={messageListRef}
+                sx={{ 
+                  flex: 1, 
+                  overflow: 'auto', 
+                  p: 2,
+                  bgcolor: theme.palette.grey[50]
+                }}
+              >
                 {messages.length === 0 ? (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                    <Typography color="text.secondary">No messages yet</Typography>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center', 
+                    height: '100%'
+                  }}>
+                    <Typography color="text.secondary">
+                      No messages yet. Start a conversation!
+                    </Typography>
                   </Box>
                 ) : (
                   messages.map((message, index) => {
-                    console.log('Rendering message:', message); // Debugging log
+                    const isCurrentUser = message.sender.id === currentUser.id;
+                    const showDate = index === 0 || 
+                      new Date(message.sentAt).toDateString() !== 
+                      new Date(messages[index - 1].sentAt).toDateString();
+
                     return (
-                      <React.Fragment key={message.id || index}>
-                        <ListItem sx={{ py: 1 }}>
-                          <Box sx={{ 
-                            display: 'flex', 
-                            alignItems: 'flex-start', 
-                            gap: 1,
-                            width: '100%'
-                          }}>
+                      <React.Fragment key={message.id}>
+                        {showDate && (
+                          <Box 
+                            sx={{ 
+                              textAlign: 'center', 
+                              my: 2,
+                              position: 'relative'
+                            }}
+                          >
                             <Typography 
-                              component="span" 
-                              variant="subtitle2" 
-                              color={message.sender?.id === currentUser?.id ? 'primary' : 'text.primary'}
-                              sx={{ 
-                                fontWeight: message.sender?.id === currentUser?.id ? 'bold' : 'normal',
-                                minWidth: 'fit-content'
+                              variant="caption"
+                              sx={{
+                                bgcolor: 'background.paper',
+                                px: 2,
+                                py: 0.5,
+                                borderRadius: 1,
+                                color: 'text.secondary'
                               }}
                             >
-                              {message.sender?.id === currentUser?.id ? 'You' : selectedUser.username}:
+                              {new Date(message.sentAt).toLocaleDateString()}
                             </Typography>
-                            <Typography 
-                              component="span" 
-                              sx={{ 
-                                flex: 1,
-                                overflowWrap: 'break-word',
-                                wordBreak: 'break-word'
-                              }}
-                            >
+                          </Box>
+                        )}
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            justifyContent: isCurrentUser ? 'flex-end' : 'flex-start',
+                            mb: 1.5
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              maxWidth: '70%',
+                              bgcolor: isCurrentUser ? 'primary.main' : 'background.paper',
+                              color: isCurrentUser ? 'primary.contrastText' : 'text.primary',
+                              borderRadius: 2,
+                              p: 1.5,
+                              boxShadow: 1
+                            }}
+                          >
+                            <Typography variant="body1">
                               {message.content}
                             </Typography>
                             <Typography 
-                              component="span" 
                               variant="caption" 
-                              color="text.secondary" 
                               sx={{ 
-                                ml: 2,
-                                minWidth: 'fit-content'
+                                display: 'block',
+                                textAlign: 'right',
+                                mt: 0.5,
+                                opacity: 0.8
                               }}
                             >
                               {formatDateTime(message.sentAt)}
                             </Typography>
                           </Box>
-                        </ListItem>
-                        <Divider />
+                        </Box>
                       </React.Fragment>
                     );
                   })
                 )}
                 <div ref={messagesEndRef} />
-              </List>
+              </Box>
 
+              {/* Message Input */}
               <Box 
                 component="form" 
-                onSubmit={handleSendMessage} 
-                sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}
+                onSubmit={handleSendMessage}
+                sx={{ 
+                  p: 2, 
+                  borderTop: `1px solid ${theme.palette.divider}`,
+                  bgcolor: theme.palette.background.paper
+                }}
               >
                 <Box sx={{ display: 'flex', gap: 1 }}>
                   <TextField
                     fullWidth
-                    size="small"
+                    size="medium"
                     placeholder="Type your message..."
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
+                    disabled={sending}
                     onKeyPress={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
                         handleSendMessage(e);
                       }
                     }}
+                    InputProps={{
+                      sx: {
+                        borderRadius: 2
+                      }
+                    }}
                   />
                   <Button
                     type="submit"
                     variant="contained"
+                    disabled={!newMessage.trim() || sending}
                     endIcon={<SendIcon />}
-                    disabled={!newMessage.trim()}
+                    sx={{ borderRadius: 2 }}
                   >
                     Send
                   </Button>
@@ -302,9 +405,21 @@ const Chat = () => {
               </Box>
             </>
           ) : (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center', 
+              height: '100%'
+            }}>
               <Typography color="text.secondary">
-                Select a user to
-                </Typography> </Box> )} </Paper> </Box> </Container> ); };
-                export default Chat;
-                
+                Select a user to start chatting
+              </Typography>
+            </Box>
+          )}
+        </Paper>
+      </Box>
+    </Container>
+  );
+};
+
+export default Chat;
