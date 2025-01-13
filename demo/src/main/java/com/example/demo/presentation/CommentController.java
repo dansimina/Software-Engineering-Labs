@@ -1,7 +1,7 @@
 package com.example.demo.presentation;
 
 import com.example.demo.business.logic.CommentService;
-import com.example.demo.model.Comment;
+import com.example.demo.dto.CommentDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,16 +11,16 @@ import java.util.Map;
 
 @RestController
 @CrossOrigin
-@RequestMapping("/api/v1/comments")  // Added leading slash
+@RequestMapping("/api/v1/comments")
 public class CommentController {
     @Autowired
     private CommentService commentService;
 
     @GetMapping("/recommendation/{recommendationId}")
-    public ResponseEntity<List<Comment>> getRecommendationComments(@PathVariable Integer recommendationId) {
+    public ResponseEntity<List<CommentDTO>> getRecommendationComments(@PathVariable Integer recommendationId) {
         try {
             System.out.println("Fetching comments for recommendation ID: " + recommendationId);
-            List<Comment> comments = commentService.findByRecommendationId(recommendationId);
+            List<CommentDTO> comments = commentService.findByRecommendationId(recommendationId);
             System.out.println("Found " + comments.size() + " comments");
             return ResponseEntity.ok(comments);
         } catch (Exception e) {
@@ -30,7 +30,7 @@ public class CommentController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<?> createComment(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<CommentDTO> createComment(@RequestBody Map<String, Object> request) {
         try {
             Integer userId = (Integer) request.get("userId");
             Integer recommendationId = (Integer) request.get("recommendationId");
@@ -40,7 +40,7 @@ public class CommentController {
                     ", recommendationId=" + recommendationId +
                     ", content=" + content);
 
-            Comment comment = commentService.createComment(userId, recommendationId, content);
+            CommentDTO comment = commentService.createComment(userId, recommendationId, content);
             return ResponseEntity.ok(comment);
         } catch (Exception e) {
             e.printStackTrace();

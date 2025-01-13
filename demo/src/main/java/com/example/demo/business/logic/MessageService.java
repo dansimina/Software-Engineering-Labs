@@ -2,6 +2,8 @@ package com.example.demo.business.logic;
 
 import com.example.demo.data.access.MessageRepository;
 import com.example.demo.data.access.UserRepository;
+import com.example.demo.dto.MessageDTO;
+import com.example.demo.dto.UserDTO;
 import com.example.demo.model.Message;
 import com.example.demo.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +12,7 @@ import jakarta.transaction.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class MessageService {
@@ -22,17 +25,48 @@ public class MessageService {
         this.userRepository = userRepository;
     }
 
+    private MessageDTO convertToDTO(Message message) {
+        UserDTO senderDTO = new UserDTO(
+                message.getSender().getId(),
+                message.getSender().getUsername(),
+                null, // Don't include password
+                message.getSender().getEmail(),
+                message.getSender().getSurename(),
+                message.getSender().getForename(),
+                message.getSender().getRole(),
+                message.getSender().getDescription(),
+                message.getSender().getRegistrationDate(),
+                null, null, null, null // We don't need these lists for messages
+        );
+
+        UserDTO receiverDTO = new UserDTO(
+                message.getReceiver().getId(),
+                message.getReceiver().getUsername(),
+                null,
+                message.getReceiver().getEmail(),
+                message.getReceiver().getSurename(),
+                message.getReceiver().getForename(),
+                message.getReceiver().getRole(),
+                message.getReceiver().getDescription(),
+                message.getReceiver().getRegistrationDate(),
+                null, null, null, null
+        );
+
+        return new MessageDTO(
+                message.getId(),
+                senderDTO,
+                receiverDTO,
+                message.getContent(),
+                message.getSentAt(),
+                message.isRead()
+        );
+    }
+
     @Transactional
-    public Message sendMessage(Integer senderId, Integer receiverId, String content) {
+    public MessageDTO sendMessage(Integer senderId, Integer receiverId, String content) {
         if (content == null || content.trim().isEmpty()) {
             throw new IllegalArgumentException("Message content cannot be empty");
         }
-
-        // Log the incoming parameters
-        System.out.println("Sending message with parameters:");
-        System.out.println("senderId: " + senderId);
-        System.out.println("receiverId: " + receiverId);
-        System.out.println("content: " + content);
 
         User sender = userRepository.findById(senderId)
                 .orElseThrow(() -> new RuntimeException("Sender not found"));
@@ -46,35 +80,14 @@ public class MessageService {
         message.setSentAt(LocalDateTime.now());
         message.setRead(false);
 
-        // Log the message object before saving
-        System.out.println("Message object before saving:");
-        System.out.println("Content: " + message.getContent());
-        System.out.println("SentAt: " + message.getSentAt());
-
         Message savedMessage = messageRepository.save(message);
-
-        // Log the saved message
-        System.out.println("Saved message:");
-        System.out.println("ID: " + savedMessage.getId());
-        System.out.println("Content: " + savedMessage.getContent());
-
-        return savedMessage;
+        return convertToDTO(savedMessage);
     }
 
-    public List<Message> getMessagesBetweenUsers(Integer userId1, Integer userId2) {
-        System.out.println("\nFetching messages between users:");
-        System.out.println("userId1: " + userId1);
-        System.out.println("userId2: " + userId2);
-
+    public List<MessageDTO> getMessagesBetweenUsers(Integer userId1, Integer userId2) {
         List<Message> messages = messageRepository.findMessagesBetweenUsers(userId1, userId2);
-
-        // Log the retrieved messages
-        System.out.println("\nRetrieved messages:");
-        for (Message msg : messages) {
-            System.out.println("Message ID: " + msg.getId() + ", Content: " + msg.getContent());
-        }
-
-        return messages;
+        return messages.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
-
 }

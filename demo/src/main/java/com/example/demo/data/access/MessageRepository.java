@@ -14,7 +14,7 @@ public interface MessageRepository extends JpaRepository<Message, Integer> {
     LEFT JOIN FETCH m.receiver r
     WHERE (m.sender.id = :userId1 AND m.receiver.id = :userId2)
     OR (m.sender.id = :userId2 AND m.receiver.id = :userId1)
-    ORDER BY m.sentAt DESC
+    ORDER BY m.sentAt ASC
     """)
     List<Message> findMessagesBetweenUsers(Integer userId1, Integer userId2);
 

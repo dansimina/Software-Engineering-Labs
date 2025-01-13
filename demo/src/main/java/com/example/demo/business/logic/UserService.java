@@ -198,4 +198,39 @@ public class UserService {
                 followerIds
         );
     }
+
+    @Transactional
+    public UserDTO updateUser(Integer id, UserDTO userDTO) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Update fields if provided
+        if (userDTO.getEmail() != null) {
+            // Check if new email is already taken by another user
+            Optional<User> existingUserWithEmail = userRepository.findByEmail(userDTO.getEmail());
+            if (existingUserWithEmail.isPresent() && !existingUserWithEmail.get().getId().equals(id)) {
+                throw new RuntimeException("Email already exists");
+            }
+            user.setEmail(userDTO.getEmail());
+        }
+
+        if (userDTO.getPassword() != null && !userDTO.getPassword().trim().isEmpty()) {
+            user.setPassword(userDTO.getPassword());
+        }
+
+        if (userDTO.getSurename() != null) {
+            user.setSurename(userDTO.getSurename());
+        }
+
+        if (userDTO.getForename() != null) {
+            user.setForename(userDTO.getForename());
+        }
+
+        if (userDTO.getDescription() != null) {
+            user.setDescription(userDTO.getDescription());
+        }
+
+        User updatedUser = userRepository.save(user);
+        return convertToDTO(updatedUser);
+    }
 }
