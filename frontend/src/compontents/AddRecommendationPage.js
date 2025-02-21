@@ -12,7 +12,10 @@ import {
   CircularProgress,
   Card,
   CardContent,
-  Grid
+  Grid,
+  Divider,
+  List,
+  ListItem
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SendIcon from '@mui/icons-material/Send';
@@ -27,6 +30,8 @@ const AddRecommendationPage = () => {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [previousRecommendations, setPreviousRecommendations] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -34,8 +39,15 @@ const AddRecommendationPage = () => {
       navigate('/');
       return;
     }
+    setCurrentUser(JSON.parse(userData));
     fetchMovie();
   }, [movieId, navigate]);
+
+  useEffect(() => {
+    if (currentUser?.id && movieId) {
+      fetchPreviousRecommendations();
+    }
+  }, [currentUser, movieId]);
 
   const fetchMovie = async () => {
     try {
@@ -50,6 +62,18 @@ const AddRecommendationPage = () => {
     }
   };
 
+  const fetchPreviousRecommendations = async () => {
+    try {
+      const response = await axios.get(`http://localhost:8080/api/v1/recommendations/user/${currentUser.id}`);
+      const movieRecommendations = response.data
+        .filter(rec => rec.movie.id === parseInt(movieId))
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setPreviousRecommendations(movieRecommendations);
+    } catch (err) {
+      console.error('Error fetching previous recommendations:', err);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!content.trim()) {
@@ -57,19 +81,12 @@ const AddRecommendationPage = () => {
       return;
     }
 
-    const userData = JSON.parse(localStorage.getItem('user'));
-    if (!userData || !userData.id) {
-      setError('Please log in to add a recommendation');
-      return;
-    }
-
     try {
       setSubmitLoading(true);
       setError('');
       
-      // Updated to match the createRecommendation method in RecommendationService
       await axios.post(`http://localhost:8080/api/v1/recommendations/create`, {
-        userId: userData.id,
+        userId: currentUser.id,
         movieId: parseInt(movieId),
         content: content.trim()
       });
@@ -80,14 +97,18 @@ const AddRecommendationPage = () => {
       }, 2000);
     } catch (err) {
       console.error('Error submitting recommendation:', err);
-      if (err.response?.data?.message?.includes('already recommended')) {
-        setError('You have already recommended this movie');
-      } else {
-        setError(err.response?.data?.message || 'Failed to submit recommendation');
-      }
+      setError(err.response?.data?.message || 'Failed to submit recommendation');
     } finally {
       setSubmitLoading(false);
     }
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   };
 
   if (loading) {
@@ -139,6 +160,31 @@ const AddRecommendationPage = () => {
         </Card>
       )}
 
+      {previousRecommendations.length > 0 && (
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h6" gutterBottom>
+            Your Previous Recommendations
+          </Typography>
+          <Paper>
+            <List>
+              {previousRecommendations.map((rec, index) => (
+                <React.Fragment key={rec.id}>
+                  <ListItem sx={{ flexDirection: 'column', alignItems: 'stretch' }}>
+                    <Box sx={{ width: '100%' }}>
+                      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                        Posted on {formatDate(rec.createdAt)}
+                      </Typography>
+                      <Typography variant="body1">{rec.content}</Typography>
+                    </Box>
+                  </ListItem>
+                  {index < previousRecommendations.length - 1 && <Divider />}
+                </React.Fragment>
+              ))}
+            </List>
+          </Paper>
+        </Box>
+      )}
+
       <Paper sx={{ p: 3 }}>
         {error && (
           <Alert severity="error" sx={{ mb: 3 }}>
@@ -161,7 +207,11 @@ const AddRecommendationPage = () => {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             error={!!error && !content.trim()}
-            helperText="Share your thoughts about this movie"
+            helperText={
+              previousRecommendations.length > 0
+                ? "Share your updated thoughts about this movie"
+                : "Share your thoughts about this movie"
+            }
             sx={{ mb: 3 }}
           />
 
@@ -180,7 +230,13 @@ const AddRecommendationPage = () => {
               startIcon={<SendIcon />}
               disabled={submitLoading || !content.trim()}
             >
-              {submitLoading ? <CircularProgress size={24} /> : 'Submit Recommendation'}
+              {submitLoading ? (
+                <CircularProgress size={24} />
+              ) : previousRecommendations.length > 0 ? (
+                'Add Another Recommendation'
+              ) : (
+                'Submit Recommendation'
+              )}
             </Button>
           </Box>
         </form>

@@ -35,31 +35,38 @@ public class RecommendationService {
 
     @Transactional
     public Recommendation createRecommendation(Integer userId, Integer movieId, String content) {
+        if (content == null || content.trim().isEmpty()) {
+            throw new IllegalArgumentException("Recommendation content cannot be empty");
+        }
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Movie movie = movieRepository.findById(movieId)
                 .orElseThrow(() -> new RuntimeException("Movie not found"));
 
-        Optional<Recommendation> existingRecommendation =
-                recommendationRepository.findByUserIdAndMovieId(userId, movieId);
-        if (existingRecommendation.isPresent()) {
-            throw new RuntimeException("User has already recommended this movie");
+        // Check for recommendations made in the last 24 hours
+        List<Recommendation> recentRecommendations = recommendationRepository
+                .findByUserIdAndMovieIdAndCreatedAt(userId, movieId, LocalDate.now());
+
+        if (!recentRecommendations.isEmpty()) {
+            throw new RuntimeException("You can only make one recommendation per movie per day");
         }
 
         Recommendation recommendation = new Recommendation();
         recommendation.setUser(user);
         recommendation.setMovie(movie);
-        recommendation.setContent(content);
+        recommendation.setContent(content.trim());
         recommendation.setCreatedAt(LocalDate.now());
+
         return recommendationRepository.save(recommendation);
     }
 
     public List<Recommendation> findByUserId(Integer userId) {
-        return recommendationRepository.findByUserId(userId);
+        return recommendationRepository.findByUserIdOrderByCreatedAtDesc(userId);
     }
 
     public List<Recommendation> findByMovieId(Integer movieId) {
-        return recommendationRepository.findByMovieId(movieId);
+        return recommendationRepository.findByMovieIdOrderByCreatedAtDesc(movieId);
     }
 
     public Optional<Recommendation> findById(Integer id) {
@@ -71,7 +78,8 @@ public class RecommendationService {
     }
 
     public List<RecommendationDTO> getRecommendationsFromFollowedUsers(Integer userId) {
-        List<Recommendation> recommendations = recommendationRepository.findRecommendationsFromFollowedUsers(userId);
+        List<Recommendation> recommendations = recommendationRepository
+                .findRecommendationsFromFollowedUsersOrderByCreatedAtDesc(userId);
         return recommendations.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -88,12 +96,16 @@ public class RecommendationService {
         movieDTO.setId(recommendation.getMovie().getId());
         movieDTO.setTitle(recommendation.getMovie().getTitle());
         movieDTO.setPoster(recommendation.getMovie().getPoster());
+        movieDTO.setDescription(recommendation.getMovie().getDescription());
+        movieDTO.setGenres(recommendation.getMovie().getGenres());
         dto.setMovie(movieDTO);
 
         // Set user data
         UserDTO userDTO = new UserDTO();
         userDTO.setId(recommendation.getUser().getId());
         userDTO.setUsername(recommendation.getUser().getUsername());
+        userDTO.setForename(recommendation.getUser().getForename());
+        userDTO.setSurename(recommendation.getUser().getSurename());
         dto.setUser(userDTO);
 
         // Set comment count
